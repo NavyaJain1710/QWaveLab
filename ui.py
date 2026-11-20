@@ -168,56 +168,59 @@ def player(key: str, res, draw: Callable, default_speed: float = 2.0) -> int:
     """
     ss = st.session_state
     n = res.n_snap
-    if ss.get(f"{key}_sig") != res.signature:
-        ss[f"{key}_sig"] = res.signature
-        ss[f"{key}_t"] = 0
-        ss[f"{key}_play"] = False
-    ss[f"{key}_t"] = int(min(max(int(ss.get(f"{key}_t", 0)), 0), n - 1))
+    snap_key = f"{key}_snap_idx"
+    play_key = f"{key}_is_playing"
+    sig_key = f"{key}_sig"
+    if ss.get(sig_key) != res.signature:
+        ss[sig_key] = res.signature
+        ss[snap_key] = 0
+        ss[play_key] = False
+    ss[snap_key] = int(min(max(int(ss.get(snap_key, 0)), 0), n - 1))
 
     speed = st.select_slider("Animation speed", options=[0.25, 0.5, 1.0, 2.0, 4.0, 8.0], value=default_speed,
                              key=f"{key}_speed", format_func=lambda v: f"{v:g}×")
     step = max(1, int(speed / 2))
     interval = max(0.08, 0.2 * step / speed)
-    run_every = interval if ss.get(f"{key}_play", False) else None
+    run_every = interval if ss.get(play_key, False) else None
 
     @st.fragment(run_every=run_every)
     def _body():
-        playing = bool(ss.get(f"{key}_play", False))
+        playing = bool(ss.get(play_key, False))
         if playing:                                   # advance BEFORE the slider is created
-            nxt = ss[f"{key}_t"] + step
+            nxt = ss[snap_key] + step
             if nxt >= n - 1:
-                ss[f"{key}_t"] = n - 1
-                ss[f"{key}_play"] = False
+                ss[snap_key] = n - 1
+                ss[play_key] = False
                 st.rerun()                            # full rerun stops the timer
             else:
-                ss[f"{key}_t"] = nxt
+                ss[snap_key] = nxt
         c1, c2, c3, c4 = st.columns(4)
-        if c1.button("⏮ Reset", key=f"{key}_b_reset"):
-            ss[f"{key}_t"] = 0
+        if c1.button("⏮ Reset", key=f"{key}_btn_reset"):
+            ss[snap_key] = 0
             if playing:
-                ss[f"{key}_play"] = False
+                ss[play_key] = False
                 st.rerun()
-        if c2.button("◀ Step back", key=f"{key}_b_back"):
-            ss[f"{key}_t"] = max(0, ss[f"{key}_t"] - 1)
+        if c2.button("◀ Step back", key=f"{key}_btn_back"):
+            ss[snap_key] = max(0, ss[snap_key] - 1)
             if playing:
-                ss[f"{key}_play"] = False
+                ss[play_key] = False
                 st.rerun()
-        if c3.button("⏸ Pause" if playing else "▶ Play", key=f"{key}_b_play"):
-            if not playing and ss[f"{key}_t"] >= n - 1:
-                ss[f"{key}_t"] = 0                    # replay from the start
-            ss[f"{key}_play"] = not playing
+        if c3.button("⏸ Pause" if playing else "▶ Play", key=f"{key}_btn_play"):
+            if not playing and ss[snap_key] >= n - 1:
+                ss[snap_key] = 0                    # replay from the start
+            ss[play_key] = not playing
             st.rerun()
-        if c4.button("Step forward ▶", key=f"{key}_b_fwd"):
-            ss[f"{key}_t"] = min(n - 1, ss[f"{key}_t"] + 1)
+        if c4.button("Step forward ▶", key=f"{key}_btn_fwd"):
+            ss[snap_key] = min(n - 1, ss[snap_key] + 1)
             if playing:
-                ss[f"{key}_play"] = False
+                ss[play_key] = False
                 st.rerun()
-        st.slider("Time slider (snapshot index)", 0, n - 1, key=f"{key}_t",
+        st.slider("Time slider (snapshot index)", 0, n - 1, key=snap_key,
                   help=f"{n} stored snapshots between t = 0 and t = {res.times[-1]:.2f}")
-        draw(res, int(ss[f"{key}_t"]))
+        draw(res, int(ss[snap_key]))
 
     _body()
-    return int(ss[f"{key}_t"])
+    return int(ss[snap_key])
 
 
 # --------------------------------------------------------------------------

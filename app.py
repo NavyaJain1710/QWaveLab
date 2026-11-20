@@ -35,8 +35,11 @@ with st.sidebar:
 # leaving a page stops any running animation
 if st.session_state.get("_last_page") != page:
     for k in list(st.session_state.keys()):
-        if k.endswith("_play"):
-            st.session_state[k] = False
+        if k.endswith("_is_playing"):
+            try:
+                st.session_state[k] = False
+            except Exception:
+                pass
     st.session_state["_last_page"] = page
 
 ROUTES[page]()

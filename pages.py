@@ -597,7 +597,7 @@ def page_momentum():
             if kind == "Rectangular barrier":
                 pp = dict(V0=st.slider("Barrier height V₀", 0.5, 8.0, 3.0, 0.1, key="mo_V0"),
                           width=st.slider("Barrier width", 0.2, 4.0, 1.0, 0.1, key="mo_w"), center=0.0)
-            t_max = st.slider("Duration", 5.0, 60.0, 26.0, 1.0, key="mo_t")
+            t_max = st.slider("Duration", 5.0, 60.0, 26.0, 1.0, key="mo_tmax")
             dx, dt = numerics_expander("mo", 0.1, 0.02)
     x0 = -(15 + 3 * sigma)
     Lh = math.ceil((abs(x0) + k0 * t_max + 10 * sigma + 10) / 10) * 10
